@@ -6,21 +6,21 @@ W = Node(1,0,"w")
 x = Node(2,0, "x")
 b = Node(1,0, "b")
 y = Node(1,0,"y")
+zero = Node(0,0,"zero")
 
 g1 = multiplyGate(W,x)
 g2 = sumGate(g1, b)
-#first layer
-g3 = sigmoidGate(g2)
+#first layer: relu
+g3 = maxGate(g2, zero)
 #second layer
 g4 = sigmoidGate(g3)
+#third layer
+g5 = sigmoidGate(g4)
 #final layer
-g5 = softmaxLossGate(g4)
+g6 = softmaxLossGate(g5)
 
-g5.next = y
-
-ppl  = Pipeline([g3, g4, g2, g1,g5])
+ppl  = Pipeline([g3, g4, g6, g2, g1,g5])
 order =  ppl.topologicalSort()
-
 
 # each iteration: forward, backprop, optimization
 #forward pop
@@ -29,13 +29,15 @@ for gate in order:
 	#print getVal(gate.out), gate.label
 
 #backpop
-#dz = y
-gradient = 0
+g5.out.grad = getVal(y) - getVal(g5)
 for gate in order[::-1]:
 	#the last node
 	gate.backward()
 
 
+
+
+#test example from Karpathy's website
 
 a = Node(1, 0, "a")
 b = Node(2, 0, "b")
@@ -53,31 +55,25 @@ weights = [a,b,c,x,y]
 ppl  = Pipeline([g3, g4, g2, g1,g5])
 order =  ppl.topologicalSort()
 
+#forward prop
 for gate in order:
 	gate.forward()
 
 print 'circuit output: ', getVal(g5.out) #0.8808 yay
 
-out = Node(1,0,"out")
+# backprop: start from end
 g5.out.grad = 1
 for gate in order[::-1]:
 	#the last node
 	gate.backward()
 
-#gradient descent
+#gradient descent for each weight vector
 step_size = 0.01
-a.val += step_size*a.grad
-print a.grad
-b.val += step_size*b.grad
-print b.grad
-c.val += step_size*c.grad
-print c.grad
-x.val += step_size*x.grad
-print x.grad
-y.val += step_size*y.grad
-print y.grad
+for weight in weights:
+	weight.val += step_size*weight.grad
+
 for gate in order:
 	gate.forward()
 
-print 'circuit output: ', getVal(g5.out)
+print 'circuit output: ', getVal(g5.out) #0.8826 woohoo
 
