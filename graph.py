@@ -9,11 +9,11 @@ def getVal(node):
 	else:
 		return node.val
 
-def update(node, val):
+def updateGrad(node, grad):
 	if node.out:
-		node.out.val = val
+		node.out.grad = grad
 	else:
-		node.grad = val
+		node.grad = grad
 
 def getGradient(node):
 	if node.out:
@@ -37,22 +37,25 @@ class multiplyGate():
 	def forward(self):
 		xVal = getVal(self.x)
 		yVal = getVal(self.y)
-		if type(xVal) == int and type(yVal) == int:
+		if np.isscalar(xVal) and np.isscalar(yVal):
 			self.out.val = xVal*yVal
 		else:
 			self.out.val = np.matmul(yVal, xVal)
 		return self.out
 
-	def backward(self, z):
+	def backward(self):
 		xVal = getVal(self.x)
 		yVal = getVal(self.y)
-		zVal = getVal(z)
-		if type(xVal) == int and type(yVal) == int:
-			self.x.grad += zVal*yVal
-			self.y.grad += zVal*xVal
+		zVal = self.out.grad
+		if np.isscalar(xVal) and np.isscalar(yVal):
+			dx = getGradient(self.x)
+			dy = getGradient(self.y)
+			updateGrad(self.x, dx + zVal * yVal)
+			updateGrad(self.y, dy + zVal * xVal)
+
 		else:
-			self.x.grad += np.matmul(xVal.T,dz)
-			self.y.grad += np.matmal(yVal.T,dz)
+			self.x.grad += np.matmul(yVal.T,dz)
+			self.y.grad += np.matmal(xVal.T,dz)
 
 class sumGate():
 	def __init__(self, x, y):
@@ -72,12 +75,12 @@ class sumGate():
 		self.out.val = xVal + yVal
 		return self.out
 
-	def backward(self, z):
-		dz = getVal(z)
+	def backward(self):
+		dz = self.out.grad
 		dx = getGradient(self.x)
 		dy = getGradient(self.y)
-		update(self.x, dx + dz)
-		update(self.y, dy + dz)
+		updateGrad(self.x, dx + dz)
+		updateGrad(self.y, dy + dz)
 
 
 class maxGate():
@@ -96,12 +99,14 @@ class maxGate():
 		self.out.val = max(x.val,y.val)
 		return self.out
 
-	def backward(self, z):
-		dz = getVal(z)
-		if (self.x > self.y):
-			self.x.grad += dz 
+	def backward(self):
+		dx = getGradient(self.x)
+		dy = getGradient(self.y)
+		dz = getGradient(self.out)
+		if (getVal(self.x) > getVal(self.y)):
+			updateGrad(self.x, dx + dz)
 		else:
-			self.y.grad += dz
+			updateGrad(self.y, dy + dz)
 
 class sigmoidGate():
 	def __init__(self, x):
@@ -117,9 +122,9 @@ class sigmoidGate():
 		self.out.val = self.sigmoidFunc(getVal(self.x))
 		return self.out
 
-	def backward(self, z):
-		dz = getVal(z)
-		self.out.grad = (self.out.val*(1 - self.out.val))*dz
+	def backward(self):
+		dz = getGradient(self.out)
+		updateGrad(self.x, (self.out.val*(1 - self.out.val))*dz)
 
 	def sigmoidFunc(self, value):
 		return 1.0/(np.exp(-1*value) + 1)
@@ -139,8 +144,8 @@ class softmaxLossGate():
 		self.out.val = self.softmaxFunc(xVal)
 		return self.out
 
-	def backward(self, z):
-		self.x.grad = getVal(z) - getVal(self.x)
+	def backward(self): #self.out.grad = predicted y - x (need to be initialized elsewhere)
+		updateGrad(self.x, self.out.grad)
 
 	def calculate(self,vec):
 		c = -np.max(vec)
@@ -155,6 +160,7 @@ class softmaxLossGate():
 		else:
 			return val/(1.0*val)
 
+#regularization pull
 
 class Node():
 	def __init__(self, val, grad, label=""):
