@@ -1,3 +1,5 @@
+from graph import *
+
 #test example from Karpathy's website
 
 a = Node(1, 0, "a")
