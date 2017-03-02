@@ -1,3 +1,5 @@
+#from cs 231n homework assignment 1
+
 import numpy as np
 import random
 
