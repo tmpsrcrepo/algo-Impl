@@ -1,3 +1,6 @@
+import numpy as np
+import random
+
 def getFunc(f, x, rndstate):
     random.setstate(rndstate)
     return f(x)
