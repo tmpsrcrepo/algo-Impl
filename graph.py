@@ -4,22 +4,23 @@ from collections import deque
 #between node & gate: for node: node.out == None, gate: node.out != None
 # if it's a node, get its value or grad directly, otherwise, get gate.out
 def getVal(node):
-	if node.out != None:
-		return node.out.val
-	else:
+	if node.type == "node":
 		return node.val
+	else:
+		return node.out.val
+	
 
 def updateGrad(node, grad):
-	if node.out:
-		node.out.grad = grad
-	else:
+	if node.type == "node":
 		node.grad = grad
+	else:
+		node.out.grad = grad
 
 def getGradient(node):
-	if node.out:
-		return node.out.grad
-	else:
+	if node.type == "node":
 		return node.grad
+	else:
+		return node.out.grad
 
 class multiplyGate():
 	def __init__(self, x, y):
@@ -96,7 +97,7 @@ class maxGate():
 		self.degree = int(x.type=="gate") + int(y.type=="gate") 
 
 	def forward(self):
-		self.out.val = max(x.val,y.val)
+		self.out.val = max(getVal(self.x),getVal(self.y))
 		return self.out
 
 	def backward(self):
@@ -107,6 +108,7 @@ class maxGate():
 			updateGrad(self.x, dx + dz)
 		else:
 			updateGrad(self.y, dy + dz)
+
 
 class sigmoidGate():
 	def __init__(self, x):
@@ -131,7 +133,7 @@ class sigmoidGate():
 
 class softmaxLossGate():
 	def __init__(self, x):
-		self.label = "softmaxLoss"
+		self.label = "softmaxCELoss"
 		self.type = "gate"
 		self.next = None
 		self.out = Node(0,0)
@@ -147,6 +149,14 @@ class softmaxLossGate():
 	def backward(self): #self.out.grad = predicted y - x (need to be initialized elsewhere)
 		updateGrad(self.x, self.out.grad)
 
+	def forward(self,yVal): #self.out.grad = predicted y - x (need to be initialized elsewhere)
+		xVal = getVal(self.x)
+		self.out.val = np.log(self.softmaxFunc(xVal))*yVal
+		return self.out
+
+	def backward(self,yVal): #self.out.grad = predicted y - x (need to be initialized elsewhere)
+		updateGrad(self.x, yVal - self.out.grad)
+
 	def calculate(self,vec):
 		c = -np.max(vec)
 		vec = [np.exp(i+c) for i in vec]
@@ -158,9 +168,38 @@ class softmaxLossGate():
 		elif len(val.shape) == 1:
 			return self.calculate(val)
 		else:
-			return val/(1.0*val)
+			return 1
 
-#regularization pull
+class softmaxCEGate():
+	def __init__(self, x):
+		self.label = "softmaxCEGate"
+		self.type = "loss"
+		self.next = None
+		self.out = Node(0,0)
+		self.x = x
+		x.next = self
+		self.degree = int(x.type=="gate")
+
+	def forward(self,yVal): #self.out.grad = predicted y - x (need to be initialized elsewhere)
+		xVal = getVal(self.x)
+		self.out.val = np.log(self.softmaxFunc(xVal))*yVal
+		return self.out
+
+	def backward(self,yVal): #self.out.grad = predicted y - x (need to be initialized elsewhere)
+		updateGrad(self.x, yVal - self.out.grad)
+
+	def calculate(self,vec):
+		c = -np.max(vec)
+		vec = [np.exp(i+c) for i in vec]
+		return vec/(1.0*np.sum(vec))
+
+	def softmaxFunc(self,val):
+		if len(val.shape) > 1:
+			return np.array([calculate(i) for i in val])
+		elif len(val.shape) == 1:
+			return self.calculate(val)
+		else:
+			return 1
 
 class Node():
 	def __init__(self, val, grad, label=""):
@@ -172,16 +211,35 @@ class Node():
 		self.next = None
 		self.degree = 0
 
-class Pipeline():
-	def __init__(self, adjList):
-		self.pipeline = adjList #adjacency list of gates/notes
+class Training():
+	def __init__(self, gateList, weights):
+		self.pipeline = self.topologicalSort(gateList)
+		self.weights = weights
 
-	def topologicalSort(self):
-		count = len(self.pipeline)
-		if len(self.pipeline) == 0:
+	def forwardTraining(self, y):
+		for gate in self.pipeline:
+			if gate.type == "gate":
+				gate.forward()
+			elif gate.type == "loss":
+				gate.forward(y)
+
+	def backwardTraining(self, y):
+		for gate in self.pipeline[::-1]:
+			if gate.type == "gate":
+				gate.backward()
+			elif gate.type == "loss":
+				gate.backward(y)
+
+	def gradientDescent(self, step_size):
+		for weight in self.weights:
+			weight.val += step_size*weight.grad
+
+	def topologicalSort(self, gateList):
+		count = len(gateList)
+		if len(gateList) == 0:
 			print "come on it's empty"
 			return
-		Queue = deque([node for node in self.pipeline if node.degree ==0])
+		Queue = deque([node for node in gateList if node.degree ==0])
 		order = []
 		labels = []
 		while Queue:
@@ -203,8 +261,3 @@ class Pipeline():
 		else:
 			print "not valid topological order"
 			return
-
-				
-
-
-
