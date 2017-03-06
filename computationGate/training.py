@@ -1,8 +1,26 @@
 from graph import *
+def initializeEmptyVec(x):
+	if np.isscalar(x):
+		return np.zeros(x)
+	elif len(np.shape(x)) == 1:
+		return np.empty(x.shape[0])
+	else:
+		shape = x.shape
+		return np.empty([shape[0], shape[1]])
+
+def initializeRandomVec(x):
+	if np.isscalar(x):
+		return np.random.rand(x)
+	elif len(np.shape(x)) == 1:
+		return np.random.rand(x.shape[0])
+	else:
+		shape = x.shape
+		return np.random.rand([shape[0], shape[1]])
 
 class Training():
 	def __init__(self, inputs):
-		self.weights = [i for i in inputs if i.type == "node"]
+		self.weights = [i for i in inputs if i.type == "weight"]
+		self.gradients = initializeEmptyVec(np.array(inputs))
 		self.gates = [i for i in inputs if i.type == "gate" or i.type == "loss"]
 		self.pipeline = self.topologicalSort(inputs)
 
