@@ -2,9 +2,9 @@ from graph import *
 from training import *
 # scalar case: W = 1, x = 2, b =1
 
-W = Node(1,0,"w")
-x = Node(2,0, "x")
-b = Node(1,0, "b")
+W = Weight(1,0,"w")
+x = Input(2,0, "x")
+b = Weight(1,0, "b")
 
 zero = Node(0,0,"zero")
 
