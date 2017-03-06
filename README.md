@@ -1,4 +1,4 @@
-# computation graph & SGD Implementations
+# Computation graph & SGD Implementations
 
 
  Done: 
