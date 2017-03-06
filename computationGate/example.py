@@ -1,10 +1,10 @@
 #test example from Karpathy's website
 
-a = Node(1, 0, "a")
-b = Node(2, 0, "b")
-c = Node(-3, 0, "c")
-x = Node(-1, 0, "x")
-y = Node(3,0, "y")
+a = Weight(1, 0, "a")
+b = Weight(2, 0, "b")
+c = Weight(-3, 0, "c")
+x = Input(-1, 0, "x")
+y = Output(3,0, "y")
 
 g1 = multiplyGate(a,x)
 g2 = multiplyGate(b,y)
