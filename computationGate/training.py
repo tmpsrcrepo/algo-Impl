@@ -35,7 +35,7 @@ class Training():
 		while Queue:
 			node = Queue.popleft()
 			# we only store the order of gates (operators & loss functions)
-			if node.type != "node":
+			if node.type == "gate" or node.type == "loss":
 				order.append(node)
 				labels.append(node.label)
 			for nex in node.next:
