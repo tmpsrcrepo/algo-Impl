@@ -4,19 +4,19 @@ from collections import deque
 #between node & gate: for node: node.out == None, gate: node.out != None
 # if it's a node, get its value or grad directly, otherwise, get gate.out
 def getVal(node):
-	if node.type == "node":
+	if not node.out:
 		return node.val
 	else:
 		return node.out.val
 
 def updateGrad(node, grad):
-	if node.type == "node":
+	if not node.out:
 		node.grad = grad
 	else:
 		node.out.grad = grad
 
 def getGradient(node):
-	if node.type == "node":
+	if not node.out:
 		return node.grad
 	else:
 		return node.out.grad
@@ -166,10 +166,10 @@ class softmaxCEGate():
 		else:
 			return 1
 
-class Node():
+class Input(): #numerical value input 
 	def __init__(self, val, grad, label=""):
 		self.label = label
-		self.type = "node"
+		self.type = "input"
 		self.val = val
 		self.out = None
 		self.grad = grad
@@ -177,3 +177,35 @@ class Node():
 		self.prev = []
 		self.next = []
 
+class Node(): #random node used within the gate
+	def __init__(self, val, grad, label=""):
+		self.label = label
+		self.type = "input"
+		self.val = val
+		self.out = None
+		self.grad = grad
+		self.degree = 0
+		self.prev = []
+		self.next = []
+
+class Output():
+	def __init__(self, val, grad, label=""):
+		self.label = label
+		self.type = "output"
+		self.val = val
+		self.out = None
+		self.grad = grad
+		self.degree = 0
+		self.prev = []
+		self.next = []
+
+class Weight():
+	def __init__(self, val, grad, label=""):
+		self.label = label
+		self.type = "weight"
+		self.val = val
+		self.out = None
+		self.grad = grad
+		self.degree = 0
+		self.prev = []
+		self.next = []
