@@ -5,7 +5,7 @@
  1. computational graph implementation inspired by Karpathy's blog post & cs231n: http://karpathy.github.io/neuralnets/
   * basic operations: *, +, sigmoid, max and softmaxCrossEntropyError
   * tological sort for the execution order
-  * gradient descent (most basic, no learning)
+  * gradient descent (most basic, no adaptive learning rate update or momentum stuff)
   
 TODO:
  1. Fix vector multiplication & run some tests 
