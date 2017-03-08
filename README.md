@@ -8,7 +8,7 @@
   * gradient descent (most basic, no adaptive learning rate update or momentum stuff)
   
 TODO:
- 1. Fix vector multiplication & run some tests (https://cs224d.stanford.edu/lectures/CS224d-Lecture6.pdf)
+ 1. Fix vector multiplication & run some tests (p18 https://cs224d.stanford.edu/lectures/CS224d-Lecture6.pdf)
  2. (optional improvement) 
     * Cost function parser (i.e. convert "W*x + b" -> <br/> g1 = multiplyGate(W, x) <br/> g2 = sumGate(g1, b))
     * reg
